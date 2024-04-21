@@ -22,12 +22,8 @@ public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int quizId;
-
+    private int quizOwner;
     private long score;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
-    private User user;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

@@ -4,6 +4,7 @@ import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import QuizApp.model.quiz.Quiz;
@@ -41,8 +42,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private UserRole role;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Quiz> quizzes;
+//    @OneToMany(mappedBy = "user", cascade = CascadeType.DETACH)
+//    @JsonBackReference
+//    private List<Quiz> quizzes;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

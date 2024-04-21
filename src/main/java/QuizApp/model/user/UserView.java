@@ -13,5 +13,4 @@ public interface UserView {
     String getUserName();
     String getUserEmail();
     User.UserRole getRole();
-    List<Quiz> getQuizzes();
 }

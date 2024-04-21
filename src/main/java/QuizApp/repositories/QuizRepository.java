@@ -11,14 +11,15 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface QuizRepository extends JpaRepository<Quiz, Integer> {
-    List<Quiz> findByUserUserId(int userId);
+//    List<Quiz> findByUserUserId(int userId);
 
     QuizView findQuizViewByQuizId(int quizId);
 
     Quiz findQuizByQuizId(int quizId);
 
-    @Query("SELECT q.quizId AS quizId, q.score AS quizScore FROM Quiz q WHERE q.user.userId = :userId")
+    @Query("SELECT q.quizId AS quizId, q.score AS quizScore FROM Quiz q WHERE q.quizOwner = :userId")
     List<QuizzesAndScoresView> findAllByUserId(@Param("userId") int userId);
 
     ResultView findResultViewByQuizId(int quizId);
+    int deleteQuizByQuizId(int quizId);
 }

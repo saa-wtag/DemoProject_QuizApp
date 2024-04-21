@@ -59,7 +59,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
                 .antMatchers(HttpMethod.POST, "/questions").hasRole("ADMIN")
                 .antMatchers(HttpMethod.PUT, "/questions/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/questions/**").hasRole("ADMIN")
-                .antMatchers(HttpMethod.GET, "/questions/**").permitAll()
+                .antMatchers(HttpMethod.GET, "/questions/**").hasRole("ADMIN")
 
 
                 .antMatchers(HttpMethod.POST, "/quizzes/**").hasRole("USER")

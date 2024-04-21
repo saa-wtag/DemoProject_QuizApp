@@ -28,7 +28,6 @@ import java.util.Map;
 
 
 @Service
-@Transactional
 public class QuizServiceImpl implements QuizService{
     private final QuestionService questionService;
     private final QuizRepository quizRepository;
@@ -44,7 +43,7 @@ public class QuizServiceImpl implements QuizService{
 
     public boolean isUserQuizOwner(int quizId, int userId) {
         Quiz quiz = quizRepository.findById(quizId).orElse(null);
-        return quiz != null && quiz.getUser().getUserId() == userId;
+        return quiz != null && quiz.getQuizOwner() == userId;
     }
 
 
@@ -60,7 +59,7 @@ public class QuizServiceImpl implements QuizService{
 
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
         Quiz quiz = new Quiz();
-        quiz.setUser(user);
+        quiz.setQuizOwner(user.getUserId());
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 
@@ -162,7 +161,7 @@ public class QuizServiceImpl implements QuizService{
         User user = userRepository.findByUserName(userDetails.getUsername());
 
         Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz not found"));
-        boolean isOwner = quiz.getUser().getUserId() == user.getUserId();
+        boolean isOwner = quiz.getQuizOwner() == user.getUserId();
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
@@ -170,6 +169,7 @@ public class QuizServiceImpl implements QuizService{
             throw new AccessDeniedException("Access denied: You are not authorized to delete this quiz.");
         }
 
-        quizRepository.delete(quiz);
+        int x = quizRepository.deleteQuizByQuizId(quizId);
+        System.out.println("sdas"+ x);
     }
 }

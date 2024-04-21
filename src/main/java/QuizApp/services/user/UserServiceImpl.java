@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService{
             throw new NoSuchElementException("There is no such user!");
         }
 
-        user.getQuizzes().size();  // Initialize the collection to avoid LazyInitializationException
+        // Initialize the collection to avoid LazyInitializationException
         return user;
     }
 
