@@ -26,13 +26,13 @@ public class QuizController {
         this.quizService = quizService;
     }
 
-    @PostMapping("/create/{userId}")
-    public ResponseEntity<QuizView> createQuiz(@PathVariable int userId) {
-        QuizView quizView = quizService.createQuiz(userId);
+    @PostMapping("/")
+    public ResponseEntity<QuizView> createQuiz() {
+        QuizView quizView = quizService.createQuiz();
         return new ResponseEntity<>(quizView, HttpStatus.CREATED);
     }
 
-    @PatchMapping("/submit/{quizId}")
+    @PatchMapping("/{quizId}")
     public ResponseEntity<ResultView> submitAnswers(@PathVariable int quizId, @Valid @RequestBody AnswerInput answers) {
         ResultView resultView = quizService.submitAnswers(quizId, answers.getAnswerIds());
         return ResponseEntity.ok(resultView);
@@ -42,12 +42,6 @@ public class QuizController {
     public ResponseEntity<QuizView> getQuiz(@PathVariable int quizId) {
         QuizView quizView = quizService.getQuiz(quizId);
         return ResponseEntity.ok(quizView);
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<QuizzesAndScoresView>> listQuizzesForUser(@PathVariable int userId) {
-        List<QuizzesAndScoresView> quizzes = quizService.listQuizzesForUser(userId);
-        return ResponseEntity.ok(quizzes);
     }
 
 

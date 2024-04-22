@@ -3,11 +3,13 @@ package QuizApp.controllers;
 import javax.validation.Valid;
 
 import QuizApp.exceptions.AccessDeniedException;
+import QuizApp.model.quiz.QuizzesAndScoresView;
 import QuizApp.model.user.User;
 import QuizApp.model.user.UserInput;
 import QuizApp.model.user.UserUpdate;
 import QuizApp.model.user.UserView;
 import QuizApp.repositories.UserRepository;
+import QuizApp.services.quiz.QuizService;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.services.user.UserService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -27,31 +30,30 @@ import java.util.NoSuchElementException;
 public class UserController {
     private final UserService userService;
     private final UserRepository userRepository;
+    private final QuizService quizService;
 
     @Autowired
-    public UserController(UserService userService, UserRepository userRepository) {
+    public UserController(UserService userService, UserRepository userRepository, QuizService quizService) {
         this.userService = userService;
         this.userRepository = userRepository;
+        this.quizService = quizService;
     }
 
     @PostMapping("/")
-    public ResponseEntity<?> createUser(@Valid @RequestBody UserInput userInput) {
+    public ResponseEntity<UserView> createUser(@Valid @RequestBody UserInput userInput) {
         User user = QuizObjectMapper.convertUserInputToModel(userInput);
-        User registeredUser = userService.registerUser(user);
-        ResponseEntity<?> response = getUser(registeredUser.getUserId());
-        return new ResponseEntity<>(response.getBody(), HttpStatus.CREATED);
+        UserView registeredUser = userService.registerUser(user);
+        return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }
-    @PostMapping("/admin/")
-    public ResponseEntity<?> createAdmin(@Valid @RequestBody UserInput userInput) {
-        User user = QuizObjectMapper.convertUserInputToModel(userInput);
-        User registeredAdmin = userService.registerAdmin(user);
-        ResponseEntity<?> response = getUser(registeredAdmin.getUserId());
-        return new ResponseEntity<>(response.getBody(), HttpStatus.CREATED);
+    @GetMapping("/{userId}/quizzes")
+    public ResponseEntity<List<QuizzesAndScoresView>> listQuizzesForUser(@PathVariable("userId") int userId) {
+        List<QuizzesAndScoresView> quizzes = quizService.listQuizzesForUser(userId);
+        return ResponseEntity.ok(quizzes);
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUser(@PathVariable int userId) {
-        UserView user = userRepository.findUserViewByUserId(userId);
+        UserView user = userService.getUser(userId);//userRepository.findUserViewByUserId(userId);
         if(user != null) {
             MappingJacksonValue mapping = new MappingJacksonValue(user);
             SimpleFilterProvider filters = new SimpleFilterProvider();
@@ -69,35 +71,19 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
         }
     }
-    @PutMapping("/{userId}")
+    @PutMapping("/")
     public ResponseEntity<Map<String, Object>> editUserDetails(
             @RequestHeader("Authorization") String token,
-            @PathVariable int userId,
             @Valid @RequestBody UserUpdate updatedUser) {
 
-        String jwt = token.substring(7);
+        String jwt = token.substring(7); // Extract the JWT
         Map<String, Object> response = new HashMap<>();
 
-        try {
-            User user = QuizObjectMapper.convertUserUpdateToModel(updatedUser);
-            User editedUser = userService.updateUserDetails(userId, user, jwt);
-            UserView userView = userRepository.findUserViewByUserId(userId);
+        UserView editedUser = userService.updateUserDetails(jwt, updatedUser);
+        response.put("user", editedUser);
+        response.put("message", "User details updated successfully. Re-authentication required.");
+        return ResponseEntity.ok(response);
 
-            if (userView != null) {
-                response.put("user", userView);
-                response.put("message", "User details updated successfully. Login required.");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("error", "User not found with ID: " + userId);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-        } catch (AccessDeniedException e) {
-            response.put("error", "Access denied: Users can only update their own details.");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        } catch (IllegalStateException e) {
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
     }
 
     @DeleteMapping("/{userId}")

@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 public class LogoutController {
     private final JwtService jwtService;
@@ -18,11 +21,12 @@ public class LogoutController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String token) {
         String jwt = token.substring(7);
 
         jwtService.blacklistToken(jwt);
-
-        return ResponseEntity.ok("Logout Successfully done!!");
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Logout Successfully done!!");
+        return ResponseEntity.ok(response);
     }
 }

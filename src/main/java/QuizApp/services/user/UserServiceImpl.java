@@ -4,6 +4,9 @@ package QuizApp.services.user;
 import QuizApp.exceptions.AccessDeniedException;
 import QuizApp.exceptions.UserAlreadyExistsException;
 import QuizApp.model.user.User;
+import QuizApp.model.user.UserUpdate;
+import QuizApp.model.user.UserView;
+import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.repositories.UserRepository;
 import QuizApp.exceptions.ObjectNotFoundException;
 import QuizApp.services.jwt.JwtService;
@@ -39,7 +42,7 @@ public class UserServiceImpl implements UserService{
 
 
     @Override
-    public User registerUser(User user) {
+    public UserView registerUser(User user) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && !authentication.getPrincipal().equals("anonymousUser")) {
             throw new AccessDeniedException("Logged-in users are not allowed to create new accounts.");
@@ -58,51 +61,30 @@ public class UserServiceImpl implements UserService{
 
         user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
         user.setRole(User.UserRole.USER);
-
-        return userRepository.save(user);
-    }
-
-    @Override
-    public User registerAdmin(User user) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
-            throw new AccessDeniedException("Access denied: Only administrators can perform this action.");
-        }
-
-        User existingUserByUsername = userRepository.findByUserName(user.getUsername());
-        User existingUserByEmail = userRepository.findByUserEmail(user.getUserEmail());
-        if (existingUserByUsername != null) {
-            throw new UserAlreadyExistsException("Username is already registered");
-        }
-        if (existingUserByEmail != null) {
-            throw new UserAlreadyExistsException("Email is already registered");
-        }
-
-        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
-        user.setRole(User.UserRole.ADMIN);
-
-        return userRepository.save(user);
+        userRepository.save(user);
+        return userRepository.findUserViewByUserId(user.getUserId());
     }
 
     @Override
     @Transactional
-    public User updateUserDetails(int userId, User user, String token) {
-
+    public UserView updateUserDetails(String token, UserUpdate userToUpdate) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        User currentUser = (User) authentication.getPrincipal();
-        User authenticatedUser = userRepository.findByUserId(currentUser.getUserId());
-
-        if (authenticatedUser.getUserId() != userId) {
-            throw new AccessDeniedException("Access denied: Users can only update their own details.");
+        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+            throw new AccessDeniedException("User is not authenticated");
         }
 
-        User existingUser = userRepository.findById(userId)
+        User currentUser = (User) authentication.getPrincipal();
+        int currentUserId = currentUser.getUserId();
+        User user = QuizObjectMapper.convertUserUpdateToModel(userToUpdate);
+
+        User existingUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
         boolean logoutNeeded = false;
 
-        if (user.getUsername() != null && !user.getUsername().isEmpty() && !user.getUsername().equals(existingUser.getUsername())) {
+
+        if (user.getUsername() != null && !user.getUsername().equals(existingUser.getUsername())) {
             if (userRepository.existsByUserName(user.getUsername())) {
                 throw new IllegalStateException("Username is already in use");
             }
@@ -110,35 +92,33 @@ public class UserServiceImpl implements UserService{
             logoutNeeded = true;
         }
 
-        if (user.getUserEmail() != null && !user.getUserEmail().isEmpty() && !user.getUserEmail().equals(existingUser.getUserEmail())) {
-            if (userRepository.existsByUserEmail(user.getUserEmail())) {
+        if (userToUpdate.getUserEmail() != null && !userToUpdate.getUserEmail().equals(existingUser.getUserEmail())) {
+            if (userRepository.existsByUserEmail(userToUpdate.getUserEmail())) {
                 throw new IllegalStateException("Email is already in use");
             }
-            existingUser.setUserEmail(user.getUserEmail());
+            existingUser.setUserEmail(userToUpdate.getUserEmail());
         }
 
-        if (user.getUserPassword() != null && !user.getUserPassword().isEmpty()) {
-            existingUser.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
-            logoutNeeded=true;
+        if (userToUpdate.getUserPassword() != null && !userToUpdate.getUserPassword().isEmpty()) {
+            existingUser.setUserPassword(passwordEncoder.encode(userToUpdate.getUserPassword()));
+            logoutNeeded = true;
         }
 
         if (logoutNeeded) {
             jwtService.blacklistToken(token);
             SecurityContextHolder.clearContext();
         }
-
-        return userRepository.save(existingUser);
+        userRepository.save(existingUser);
+        return userRepository.findUserViewByUserId(existingUser.getUserId());
     }
 
     @Override
-    public User getUser(int userId) {
+    public UserView getUser(int userId) {
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
+        UserView user = userRepository.findUserViewByUserId(userId);
         if(Objects.isNull(user)){
             throw new NoSuchElementException("There is no such user!");
         }
-
-        // Initialize the collection to avoid LazyInitializationException
         return user;
     }
 

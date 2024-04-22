@@ -8,7 +8,7 @@ import QuizApp.model.quiz.ResultView;
 import java.util.List;
 
 public interface QuizService {
-    QuizView createQuiz(int userId);
+    QuizView createQuiz();
     QuizView getQuiz(int quizId);
     List<QuizzesAndScoresView> listQuizzesForUser(int userId);
 

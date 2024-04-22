@@ -14,7 +14,7 @@ import java.util.Map;
 @Setter
 public class QuestionUpdate {
 
-    @Size(min = 1, message = "Question title cannot be empty!")
+    @Size(min = 8,max = 80, message = "Question length must be in between 8 to 80 characters.")
     private String quesTitle;
 
     @ValidOptionsForUpdate

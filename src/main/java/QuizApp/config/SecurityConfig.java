@@ -46,13 +46,12 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .antMatchers("/login").permitAll()
-                .antMatchers("/logout").permitAll()
+                .antMatchers(HttpMethod.POST,"/login").permitAll()
+                .antMatchers(HttpMethod.POST,"/logout").hasAnyRole("ADMIN", "USER")
 
-                .antMatchers(HttpMethod.POST, "/users/*").permitAll()
-                .antMatchers(HttpMethod.POST, "/users/admin/").permitAll()
+                .antMatchers(HttpMethod.POST, "/users/**").permitAll()
                 .antMatchers(HttpMethod.PUT, "/users/*").hasAnyRole("ADMIN", "USER")
-                .antMatchers(HttpMethod.DELETE, "/users/*").hasAnyRole("ADMIN")
+                .antMatchers(HttpMethod.DELETE, "/users/*").hasAnyRole("ADMIN","USER")
                 .antMatchers(HttpMethod.GET, "/users/*").hasAnyRole("ADMIN", "USER")
 
 
@@ -72,6 +71,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
 
                 .anyRequest().authenticated()
                 .and()
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(point))
                 .exceptionHandling()
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 Forbidden

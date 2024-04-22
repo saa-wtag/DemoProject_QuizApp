@@ -48,18 +48,23 @@ public class QuizServiceImpl implements QuizService{
 
 
     @Override
-    public QuizView createQuiz(int userId) {
+    public QuizView createQuiz() {
+        // Get the current authentication object
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        User user = (User) authentication.getPrincipal();
-        int currentUserId = user.getUserId();
-        if(currentUserId != userId){
-            throw new AccessDeniedException("You can not create Quiz using others user id");
+        // Ensure authentication is not null and contains user details
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
+            throw new AccessDeniedException("User is not authenticated");
         }
 
+        // Fetch the current user from the authentication object
+        User user = (User) authentication.getPrincipal(); // You might need to cast to your user class
+        int currentUserId = user.getUserId(); // Get the userId from the user details
+
+        // Use the currentUserId to create the quiz
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
         Quiz quiz = new Quiz();
-        quiz.setQuizOwner(user.getUserId());
+        quiz.setQuizOwner(currentUserId); // Assign the current user as the quiz owner
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 

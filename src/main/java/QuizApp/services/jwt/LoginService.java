@@ -1,5 +1,6 @@
 package QuizApp.services.jwt;
 
+import QuizApp.exceptions.UnauthorizedException;
 import QuizApp.model.jwt.JWTRequest;
 import QuizApp.model.jwt.RefreshTokenResponse;
 import QuizApp.services.user.UserService;
@@ -30,7 +31,7 @@ public class LoginService {
         try {
             authenticationManager.authenticate(usernamePasswordAuthenticationToken);
         } catch (AuthenticationException e) {
-            throw new BadCredentialsException("Bad credentials");
+            throw new UnauthorizedException("Bad credentials");
         }
 
         UserDetails userDetails = userService.loadUserByUsername(request.getUserName());

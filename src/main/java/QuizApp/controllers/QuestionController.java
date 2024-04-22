@@ -31,8 +31,9 @@ public class QuestionController {
     @PostMapping
     public ResponseEntity<QuestionView> createQuestion(@Valid @RequestBody QuestionInput questionInput) {
         QuestionView question = questionService.createQuestion(questionInput);
-        return ResponseEntity.ok(question);
+        return ResponseEntity.status(HttpStatus.CREATED).body(question);
     }
+
 
 
     @PutMapping("/{questionId}")
