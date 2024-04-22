@@ -24,6 +24,9 @@ public class JwtService {
     private String accessTokenSecret;
 
     private final Set<String> invalidatedTokens = new HashSet<>();
+    private String currentAccessToken ;
+    private String currentRefreshToken;
+    private final Map<String, String> tokenPairs = new HashMap<>();
 
     public String getUsernameFromToken(String token, TokenType tokenType) {
         return getClaimFromToken(token, Claims::getSubject, tokenType);
@@ -62,12 +65,30 @@ public class JwtService {
 
     public String generateAccessToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername(), JWT_ACCESS_TOKEN_VALIDITY, accessTokenSecret);
+        String token = doGenerateToken(claims, userDetails.getUsername(), JWT_ACCESS_TOKEN_VALIDITY, accessTokenSecret);
+        if(currentAccessToken == null){
+            currentAccessToken = token;
+        }
+        else{
+            blacklistToken(currentAccessToken);
+            currentAccessToken = token;
+        }
+        return token;
     }
 
     public String generateRefreshToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername(), JWT_REFRESH_TOKEN_VALIDITY, refreshTokenSecret);
+        String token = doGenerateToken(claims, userDetails.getUsername(), JWT_REFRESH_TOKEN_VALIDITY, refreshTokenSecret);
+        if(currentRefreshToken == null){
+            currentRefreshToken = token;
+            tokenPairs.put(currentAccessToken, token);
+        }
+        else{
+            blacklistToken(currentRefreshToken);
+            currentRefreshToken = token;
+            tokenPairs.put(currentAccessToken, token);
+        }
+        return token;
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject, long validity, String tokenSecret) {
@@ -86,6 +107,7 @@ public class JwtService {
 
     public void blacklistToken(String token) {
         invalidatedTokens.add(token);
+        invalidatedTokens.add(tokenPairs.get(token));
     }
 
     public boolean isTokenInBlacklist(String token) {

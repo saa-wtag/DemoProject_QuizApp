@@ -6,9 +6,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Map;
 
-@JsonPropertyOrder({"quizId","score","questions"})
+@JsonPropertyOrder({"quizId","ifAttempted","score","questions"})
 public interface ResultView {
     int getQuizId();
+    boolean getIfAttempted();
     long getScore();
     List<QuestionDetails> getQuestions();
 }

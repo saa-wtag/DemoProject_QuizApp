@@ -127,18 +127,17 @@ public class UserServiceImpl implements UserService{
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        if (!isAdmin) {
-            throw new AccessDeniedException("Access denied: Only administrators can delete users.");
+        boolean isSelf = authentication.getName().equals(userRepository.findById(userId).get().getUsername());
+
+        if (!isAdmin && !isSelf) {
+            throw new AccessDeniedException("Access denied: Only administrators or the user themselve can delete this account.");
         }
 
         User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
 
-        if (user != null) {
-            userRepository.delete(user);
-        } else {
-            throw new NoSuchElementException("User not found with ID: " + userId);
-        }
+        userRepository.delete(user);
     }
+
 
     @Override
     @Transactional(readOnly = true)

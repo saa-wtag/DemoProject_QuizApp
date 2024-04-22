@@ -16,13 +16,14 @@ import java.util.List;
 @Getter
 @Setter
 @Table(name="tbl_quiz")
-@JsonPropertyOrder({ "quizId", "questions","score" })
+@JsonPropertyOrder({ "quizId", "questions","ifAttempted","score" })
 public class Quiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int quizId;
     private int quizOwner;
+    private boolean ifAttempted;
     private long score;
 
     @ManyToMany(fetch = FetchType.EAGER)

@@ -49,22 +49,18 @@ public class QuizServiceImpl implements QuizService{
 
     @Override
     public QuizView createQuiz() {
-        // Get the current authentication object
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // Ensure authentication is not null and contains user details
         if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
             throw new AccessDeniedException("User is not authenticated");
         }
 
-        // Fetch the current user from the authentication object
-        User user = (User) authentication.getPrincipal(); // You might need to cast to your user class
-        int currentUserId = user.getUserId(); // Get the userId from the user details
+        User user = (User) authentication.getPrincipal();
+        int currentUserId = user.getUserId();
 
-        // Use the currentUserId to create the quiz
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
         Quiz quiz = new Quiz();
-        quiz.setQuizOwner(currentUserId); // Assign the current user as the quiz owner
+        quiz.setQuizOwner(currentUserId);
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 
@@ -112,6 +108,12 @@ public class QuizServiceImpl implements QuizService{
         }
 
         Quiz quiz = quizRepository.findQuizByQuizId(quizId);
+        if (quiz.isIfAttempted()) {
+            throw new IllegalStateException("This quiz has already been attempted. You cannot submit answers again.");
+        }
+        else
+            quiz.setIfAttempted(true);
+
         long score = 0;
 
         List<Question> questions = quiz.getQuestions();
@@ -142,6 +144,11 @@ public class QuizServiceImpl implements QuizService{
             @Override
             public int getQuizId() {
                 return quizId;
+            }
+
+            @Override
+            public boolean getIfAttempted() {
+                return false;
             }
 
             @Override

@@ -52,10 +52,10 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
                 .antMatchers(HttpMethod.POST, "/users/**").permitAll()
                 .antMatchers(HttpMethod.PUT, "/users/*").hasAnyRole("ADMIN", "USER")
                 .antMatchers(HttpMethod.DELETE, "/users/*").hasAnyRole("ADMIN","USER")
-                .antMatchers(HttpMethod.GET, "/users/*").hasAnyRole("ADMIN", "USER")
+                .antMatchers(HttpMethod.GET, "/users/**").hasAnyRole("ADMIN", "USER")
 
 
-                .antMatchers(HttpMethod.POST, "/questions").hasRole("ADMIN")
+                .antMatchers(HttpMethod.POST, "/questions/").hasRole("ADMIN")
                 .antMatchers(HttpMethod.PUT, "/questions/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.DELETE, "/questions/**").hasRole("ADMIN")
                 .antMatchers(HttpMethod.GET, "/questions/**").hasRole("ADMIN")
