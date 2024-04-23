@@ -35,8 +35,8 @@ public class ExceptionAdvice {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorMessage> handleBadClientRequest(BadRequestException exp){
-        errorMessage.setMessage(Objects.requireNonNull(exp.getBindingResult().getFieldError()).getDefaultMessage());
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorMessage);
+        errorMessage.setMessage(exp.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 
     @ExceptionHandler(RuntimeException.class)

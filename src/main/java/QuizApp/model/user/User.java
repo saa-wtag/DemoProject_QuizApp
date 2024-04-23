@@ -42,9 +42,8 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private UserRole role;
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.DETACH)
-//    @JsonBackReference
-//    private List<Quiz> quizzes;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.DETACH)
+    private List<Quiz> quizzes;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

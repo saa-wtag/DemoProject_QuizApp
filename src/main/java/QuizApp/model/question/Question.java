@@ -18,7 +18,7 @@ public class Question {
     private String quesTitle;
 
     @ElementCollection
-    @CollectionTable(name = "question_options", joinColumns = @JoinColumn(name = "question_id"))
+    @CollectionTable(name = "tbl_question_options", joinColumns = @JoinColumn(name = "ques_id"))
     @MapKeyColumn(name = "option_key")
     @Column(name = "option_value")
     private Map<String, String> options;

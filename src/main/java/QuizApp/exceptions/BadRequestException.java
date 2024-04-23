@@ -7,10 +7,8 @@ import org.springframework.validation.BindingResult;
 @Getter
 @Setter
 public class BadRequestException extends RuntimeException {
-    private BindingResult bindingResult;
-
-    public BadRequestException(BindingResult bindingResult) {
-        this.bindingResult = bindingResult;
+    public BadRequestException(String message) {
+        super(message);
     }
 }
 

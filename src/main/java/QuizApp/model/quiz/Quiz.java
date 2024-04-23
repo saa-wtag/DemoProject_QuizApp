@@ -22,9 +22,12 @@ public class Quiz {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int quizId;
-    private int quizOwner;
     private boolean ifAttempted;
     private long score;
+
+    @ManyToOne
+    @JsonIgnore
+    User user;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

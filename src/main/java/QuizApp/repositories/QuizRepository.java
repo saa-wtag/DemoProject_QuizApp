@@ -17,8 +17,9 @@ public interface QuizRepository extends JpaRepository<Quiz, Integer> {
 
     Quiz findQuizByQuizId(int quizId);
 
-    @Query("SELECT q.quizId AS quizId, q.score AS quizScore FROM Quiz q WHERE q.quizOwner = :userId")
+    @Query("SELECT q.quizId AS quizId, q.score AS quizScore FROM Quiz q WHERE q.user.userId = :userId")
     List<QuizzesAndScoresView> findAllByUserId(@Param("userId") int userId);
+
 
     ResultView findResultViewByQuizId(int quizId);
     int deleteQuizByQuizId(int quizId);

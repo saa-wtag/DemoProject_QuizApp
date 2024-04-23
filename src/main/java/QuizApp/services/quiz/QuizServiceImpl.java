@@ -2,6 +2,7 @@ package QuizApp.services.quiz;
 
 
 import QuizApp.exceptions.AccessDeniedException;
+import QuizApp.exceptions.BadRequestException;
 import QuizApp.exceptions.ObjectNotFoundException;
 import QuizApp.model.question.Question;
 import QuizApp.model.question.QuestionDetails;
@@ -13,18 +14,17 @@ import QuizApp.model.user.User;
 import QuizApp.repositories.QuizRepository;
 import QuizApp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import QuizApp.services.question.QuestionService;
-import QuizApp.services.user.UserService;
+
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
 
 
 @Service
@@ -43,8 +43,9 @@ public class QuizServiceImpl implements QuizService{
 
     public boolean isUserQuizOwner(int quizId, int userId) {
         Quiz quiz = quizRepository.findById(quizId).orElse(null);
-        return quiz != null && quiz.getQuizOwner() == userId;
+        return quiz != null && quiz.getUser().getUserId() == userId;
     }
+
 
 
     @Override
@@ -56,16 +57,16 @@ public class QuizServiceImpl implements QuizService{
         }
 
         User user = (User) authentication.getPrincipal();
-        int currentUserId = user.getUserId();
-
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
+
         Quiz quiz = new Quiz();
-        quiz.setQuizOwner(currentUserId);
+        quiz.setUser(user);
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 
         return quizRepository.findQuizViewByQuizId(quiz.getQuizId());
     }
+
 
     @Override
     public QuizView getQuiz(int quizId) {
@@ -109,18 +110,17 @@ public class QuizServiceImpl implements QuizService{
 
         Quiz quiz = quizRepository.findQuizByQuizId(quizId);
         if (quiz.isIfAttempted()) {
-            throw new IllegalStateException("This quiz has already been attempted. You cannot submit answers again.");
+            throw new BadRequestException("This quiz has already been attempted. You cannot submit answers again.");
         }
         else
             quiz.setIfAttempted(true);
 
         long score = 0;
 
-        List<Question> questions = quiz.getQuestions();
         List<QuestionDetails> questionDetailsList = new ArrayList<>();
 
-        for (int i = 0; i < questions.size(); i++) {
-            Question question = questions.get(i);
+        for (int i = 0; i < quiz.getQuestions().size(); i++) {
+            Question question = quiz.getQuestions().get(i);
             String submittedAnswer = answerIds.get(i);
 
             if (question.getAnswer().equals(submittedAnswer)) {
@@ -148,7 +148,7 @@ public class QuizServiceImpl implements QuizService{
 
             @Override
             public boolean getIfAttempted() {
-                return false;
+                return true;
             }
 
             @Override
@@ -160,6 +160,16 @@ public class QuizServiceImpl implements QuizService{
             public List<QuestionDetails> getQuestions() {
                 return questionDetailsList;
             }
+
+            @Override
+            public String getUserName() {
+                return ResultView.super.getUserName();
+            }
+
+            @Override
+            public User getUser() {
+                return user;
+            }
         };
     }
 
@@ -169,19 +179,25 @@ public class QuizServiceImpl implements QuizService{
     public void deleteQuiz(int quizId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
+            throw new AccessDeniedException("User is not authenticated.");
+        }
+
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User user = userRepository.findByUserName(userDetails.getUsername());
+        User currentUser = userRepository.findByUserName(userDetails.getUsername());
 
         Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz not found"));
-        boolean isOwner = quiz.getQuizOwner() == user.getUserId();
+        boolean isOwner = quiz.getUser().getUserId() == currentUser.getUserId(); // Corrected to use 'user'
+
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        if (!isOwner && !isAdmin) {
+        if (!isAdmin && !isOwner) {
             throw new AccessDeniedException("Access denied: You are not authorized to delete this quiz.");
         }
 
-        int x = quizRepository.deleteQuizByQuizId(quizId);
-        System.out.println("sdas"+ x);
+        quizRepository.deleteById(quizId); // Use the correct delete method
+        System.out.println("Deleted quiz with ID: " + quizId);
     }
+
 }

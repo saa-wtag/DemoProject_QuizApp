@@ -23,7 +23,6 @@ public class LogoutController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String token) {
         String jwt = token.substring(7);
-
         jwtService.blacklistToken(jwt);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logout Successfully done!!");
