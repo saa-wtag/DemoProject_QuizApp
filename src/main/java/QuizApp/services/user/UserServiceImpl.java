@@ -2,6 +2,7 @@ package QuizApp.services.user;
 
 
 import QuizApp.exceptions.AccessDeniedException;
+import QuizApp.exceptions.UnauthorizedException;
 import QuizApp.exceptions.UserAlreadyExistsException;
 import QuizApp.model.user.User;
 import QuizApp.model.user.UserUpdate;
@@ -33,30 +34,22 @@ public class UserServiceImpl implements UserService{
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    @Autowired
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
-
     @Override
     public UserView registerUser(User user) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !authentication.getPrincipal().equals("anonymousUser")) {
-            throw new AccessDeniedException("Logged-in users are not allowed to create new accounts.");
-        }
 
-        User existingUserByUsername = userRepository.findByUserName(user.getUsername());
-        User existingUserByEmail = userRepository.findByUserEmail(user.getUserEmail());
+        User existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getUserEmail());
 
-        if (existingUserByUsername != null) {
-            throw new UserAlreadyExistsException("Username is already registered");
-        }
-
-        if (existingUserByEmail != null) {
-            throw new UserAlreadyExistsException("Email is already registered");
+        if (existingUser != null) {
+            if (existingUser.getUsername().equals(user.getUsername()))
+                throw new UserAlreadyExistsException("Username is already registered");
+            else if (existingUser.getUserEmail().equals(user.getUserEmail()))
+                throw new UserAlreadyExistsException("Email is already registered");
         }
 
         user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
@@ -66,36 +59,29 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    @Transactional
-    public UserView updateUserDetails(String token, UserUpdate userToUpdate) {
+    public UserView updateUserDetails(String token,int userId, UserUpdate userToUpdate) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
-            throw new AccessDeniedException("User is not authenticated");
-        }
 
         User currentUser = (User) authentication.getPrincipal();
         int currentUserId = currentUser.getUserId();
-        User user = QuizObjectMapper.convertUserUpdateToModel(userToUpdate);
+        if(currentUserId != userId)
+            throw new UnauthorizedException("You do not have permission to update other's profile");
 
-        User existingUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new IllegalStateException("User not found"));
+        User user = QuizObjectMapper.convertUserUpdateToModel(userToUpdate);
+        User existingUser = userRepository.findByUserId(currentUserId);
 
         boolean logoutNeeded = false;
 
-
         if (user.getUsername() != null && !user.getUsername().equals(existingUser.getUsername())) {
-            if (userRepository.existsByUserName(user.getUsername())) {
+            if (userRepository.existsByUserName(user.getUsername()))
                 throw new IllegalStateException("Username is already in use");
-            }
             existingUser.setUserName(user.getUsername());
             logoutNeeded = true;
         }
 
         if (userToUpdate.getUserEmail() != null && !userToUpdate.getUserEmail().equals(existingUser.getUserEmail())) {
-            if (userRepository.existsByUserEmail(userToUpdate.getUserEmail())) {
+            if (userRepository.existsByUserEmail(userToUpdate.getUserEmail()))
                 throw new IllegalStateException("Email is already in use");
-            }
             existingUser.setUserEmail(userToUpdate.getUserEmail());
         }
 
@@ -116,9 +102,8 @@ public class UserServiceImpl implements UserService{
     public UserView getUser(int userId) {
 
         UserView user = userRepository.findUserViewByUserId(userId);
-        if(Objects.isNull(user)){
+        if(Objects.isNull(user))
             throw new NoSuchElementException("There is no such user!");
-        }
         return user;
     }
 
@@ -129,18 +114,14 @@ public class UserServiceImpl implements UserService{
         boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
         boolean isSelf = authentication.getName().equals(userRepository.findById(userId).get().getUsername());
 
-        if (!isAdmin && !isSelf) {
+        if (!isAdmin && !isSelf)
             throw new AccessDeniedException("Access denied: Only administrators or the user themselve can delete this account.");
-        }
 
         User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User not found"));
-
         userRepository.delete(user);
     }
 
-
     @Override
-    @Transactional(readOnly = true)
     public User loadUserByUsername(String userName) throws UsernameNotFoundException {
         User user = userRepository.findByUserName(userName);
         if (user == null)
@@ -148,5 +129,4 @@ public class UserServiceImpl implements UserService{
 
         return user;
     }
-
 }

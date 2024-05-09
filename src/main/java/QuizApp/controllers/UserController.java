@@ -29,13 +29,13 @@ import java.util.NoSuchElementException;
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
-    private final UserRepository userRepository;
+
     private final QuizService quizService;
 
     @Autowired
-    public UserController(UserService userService, UserRepository userRepository, QuizService quizService) {
+    public UserController(UserService userService, QuizService quizService) {
         this.userService = userService;
-        this.userRepository = userRepository;
+
         this.quizService = quizService;
     }
 
@@ -53,7 +53,8 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUser(@PathVariable int userId) {
-        UserView user = userService.getUser(userId);//userRepository.findUserViewByUserId(userId);
+        UserView user = userService.getUser(userId);
+
         if(user != null) {
             MappingJacksonValue mapping = new MappingJacksonValue(user);
             SimpleFilterProvider filters = new SimpleFilterProvider();
@@ -71,15 +72,16 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
         }
     }
-    @PutMapping("/")
+
+    @PutMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> editUserDetails(
-            @RequestHeader("Authorization") String token,
+            @RequestHeader("Authorization") String token,@PathVariable int userId,
             @Valid @RequestBody UserUpdate updatedUser) {
 
-        String jwt = token.substring(7); // Extract the JWT
+        String jwt = token.substring(7);
         Map<String, Object> response = new HashMap<>();
 
-        UserView editedUser = userService.updateUserDetails(jwt, updatedUser);
+        UserView editedUser = userService.updateUserDetails(jwt,userId, updatedUser);
         response.put("user", editedUser);
         response.put("message", "User details updated successfully. Re-authentication required.");
         return ResponseEntity.ok(response);

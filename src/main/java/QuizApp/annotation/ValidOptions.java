@@ -17,8 +17,6 @@ public @interface ValidOptions {
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
-
-    boolean applyValidation() default true; // New attribute to control validation
 }
 
 

@@ -33,9 +33,8 @@ public class QuizServiceImpl implements QuizService{
     private final QuizRepository quizRepository;
     private final UserRepository userRepository;
 
-    @Autowired
-    public QuizServiceImpl(QuestionService questionService, QuizRepository quizRepository, UserRepository userRepository) {
 
+    public QuizServiceImpl(QuestionService questionService, QuizRepository quizRepository, UserRepository userRepository) {
         this.questionService = questionService;
         this.quizRepository = quizRepository;
         this.userRepository = userRepository;
@@ -47,15 +46,9 @@ public class QuizServiceImpl implements QuizService{
     }
 
 
-
     @Override
     public QuizView createQuiz() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-            throw new AccessDeniedException("User is not authenticated");
-        }
-
         User user = (User) authentication.getPrincipal();
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
 
@@ -70,13 +63,6 @@ public class QuizServiceImpl implements QuizService{
 
     @Override
     public QuizView getQuiz(int quizId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
-
-        if (user==null) {
-            throw new AccessDeniedException("You are not logged in");
-        }
-
         QuizView quizView = quizRepository.findQuizViewByQuizId(quizId);
         if(quizView==null)
         {
@@ -87,11 +73,6 @@ public class QuizServiceImpl implements QuizService{
 
     @Override
     public  List< QuizzesAndScoresView>  listQuizzesForUser(int userId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
-
-        if (user==null)
-            throw new AccessDeniedException("You are not logged in");
         if(userRepository.findByUserId(userId)==null)
             throw new ObjectNotFoundException("User not found with ID: " + userId);
 
@@ -179,15 +160,11 @@ public class QuizServiceImpl implements QuizService{
     public void deleteQuiz(int quizId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
-            throw new AccessDeniedException("User is not authenticated.");
-        }
-
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User currentUser = userRepository.findByUserName(userDetails.getUsername());
 
         Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz not found"));
-        boolean isOwner = quiz.getUser().getUserId() == currentUser.getUserId(); // Corrected to use 'user'
+        boolean isOwner = quiz.getUser().getUserId() == currentUser.getUserId();
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
@@ -196,8 +173,7 @@ public class QuizServiceImpl implements QuizService{
             throw new AccessDeniedException("Access denied: You are not authorized to delete this quiz.");
         }
 
-        quizRepository.deleteById(quizId); // Use the correct delete method
+        quizRepository.deleteById(quizId);
         System.out.println("Deleted quiz with ID: " + quizId);
     }
-
 }

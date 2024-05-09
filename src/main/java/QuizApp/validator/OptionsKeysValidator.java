@@ -12,18 +12,9 @@ public class OptionsKeysValidator implements ConstraintValidator<ValidOptions, M
     private static final Set<String> VALID_KEYS = Set.of("A", "B", "C", "D");
     private static final int MAX_LENGTH = 30;
 
-    private boolean applyValidation;
-
-    @Override
-    public void initialize(ValidOptions constraintAnnotation) {
-        applyValidation = constraintAnnotation.applyValidation();
-    }
-
     @Override
     public boolean isValid(Map<String, String> options, ConstraintValidatorContext context) {
-        if (!applyValidation) {
-            return true; // Skip validation if applyValidation is false
-        }
+
 
         if (options == null) {
             context.disableDefaultConstraintViolation();
@@ -57,7 +48,5 @@ public class OptionsKeysValidator implements ConstraintValidator<ValidOptions, M
 
         return true;
     }
-
-
 }
 
