@@ -1,10 +1,8 @@
 package QuizApp.controllers;
 
 import javax.validation.Valid;
-import QuizApp.model.question.Question;
-import QuizApp.model.question.QuestionInput;
-import QuizApp.model.question.QuestionUpdate;
-import QuizApp.model.question.QuestionView;
+
+import QuizApp.model.question.*;
 import QuizApp.repositories.QuestionRepository;
 import QuizApp.services.quiz.QuizService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,32 +27,32 @@ public class QuestionController {
     }
 
     @PostMapping
-    public ResponseEntity<QuestionView> createQuestion(@Valid @RequestBody QuestionInput questionInput) {
-        QuestionView question = questionService.createQuestion(questionInput);
+    public ResponseEntity<QuestionViewDTO> createQuestion(@Valid @RequestBody QuestionInput questionInput) {
+        QuestionViewDTO question = questionService.createQuestion(questionInput);
         return ResponseEntity.status(HttpStatus.CREATED).body(question);
     }
 
 
 
     @PutMapping("/{questionId}")
-    public ResponseEntity<QuestionView> updateQuestionDetails(@PathVariable int questionId, @Valid @RequestBody QuestionUpdate questionUpdate) {
+    public ResponseEntity<QuestionViewDTO> updateQuestionDetails(@PathVariable int questionId, @Valid @RequestBody QuestionUpdate questionUpdate) {
 
-        QuestionView updatedQuestionView = questionService.updateQuestionDetails(questionId, questionUpdate);
+        QuestionViewDTO updatedQuestionView = questionService.updateQuestionDetails(questionId, questionUpdate);
         return ResponseEntity.ok(updatedQuestionView);
     }
 
 
     @GetMapping("/{questionId}")
-    public ResponseEntity<QuestionView> getQuestion(@PathVariable int questionId) {
-        QuestionView questionView = questionService.getQuestionById(questionId);
+    public ResponseEntity<QuestionViewDTO> getQuestion(@PathVariable int questionId) {
+        QuestionViewDTO questionView = questionService.getQuestionById(questionId);
         return ResponseEntity.ok(questionView);
     }
 
 
-    @DeleteMapping("/{questionId}")
-    public ResponseEntity<Void> deleteQuestion(@PathVariable int questionId) {
-        questionService.deleteQuestion(questionId);
-        return ResponseEntity.noContent().build();
-
-    }
+//    @DeleteMapping("/{questionId}")
+//    public ResponseEntity<Void> deleteQuestion(@PathVariable int questionId) {
+//        questionService.deleteQuestion(questionId);
+//        return ResponseEntity.noContent().build();
+//
+//    }
 }

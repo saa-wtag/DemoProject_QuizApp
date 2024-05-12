@@ -10,11 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.NoSuchElementException;
 
 
@@ -28,54 +26,56 @@ public class ExceptionAdvice {
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ErrorMessage> handleNoSuchElementException(NoSuchElementException exp){
-        errorMessage.setMessage(exp.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
+    public ResponseEntity<?> handleNoSuchElementException(NoSuchElementException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
     }
+
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorMessage> handleBadClientRequest(BadRequestException exp){
-        errorMessage.setMessage(exp.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+    public ResponseEntity<?> handleBadRequestException(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorMessage> handleHibernateException(RuntimeException exp){
-        errorMessage.setMessage(exp.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorMessage);
-    }
+
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorMessage> handleHibernateException(AccessDeniedException exp){
-        errorMessage.setMessage(exp.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage);
+    public ResponseEntity<?> handleAccessDeniedException(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("message", ex.getMessage()));
     }
 
+
     @ExceptionHandler(ObjectNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleHibernateException(ObjectNotFoundException exp){
-        errorMessage.setMessage(exp.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
+    public ResponseEntity<?> handleObjectNotFoundException(ObjectNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
     }
 
     @ExceptionHandler(QuestionNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleHibernateException(QuestionNotFoundException exp){
-        errorMessage.setMessage(exp.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage);
+    public ResponseEntity<?> handleQuestionNotFoundException(QuestionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> handleUserNotFoundException(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
     }
 
     @ExceptionHandler(QuizNotFoundException.class)
-    public ResponseEntity<String> handleQuizNotFoundException(QuizNotFoundException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> handleQuizNotFoundException(QuizNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", ex.getMessage()));
     }
 
+
     @ExceptionHandler(InvalidAnswerException.class)
-    public ResponseEntity<String> handleInvalidAnswerException(InvalidAnswerException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<?> handleInvalidAnswerException(InvalidAnswerException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", ex.getMessage()));
     }
 
     @ExceptionHandler(UnauthorizedException.class)

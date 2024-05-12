@@ -2,13 +2,8 @@ package QuizApp.controllers;
 
 import javax.validation.Valid;
 
-import QuizApp.exceptions.AccessDeniedException;
-import QuizApp.model.quiz.QuizzesAndScoresView;
-import QuizApp.model.user.User;
-import QuizApp.model.user.UserInput;
-import QuizApp.model.user.UserUpdate;
-import QuizApp.model.user.UserView;
-import QuizApp.repositories.UserRepository;
+import QuizApp.model.quiz.UserQuizDto;
+import QuizApp.model.user.*;
 import QuizApp.services.quiz.QuizService;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -23,7 +18,6 @@ import QuizApp.services.user.UserService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/users")
@@ -35,25 +29,25 @@ public class UserController {
     @Autowired
     public UserController(UserService userService, QuizService quizService) {
         this.userService = userService;
-
         this.quizService = quizService;
     }
 
     @PostMapping("/")
-    public ResponseEntity<UserView> createUser(@Valid @RequestBody UserInput userInput) {
+    public ResponseEntity<UserViewDTO> createUser(@Valid @RequestBody UserInput userInput) {
         User user = QuizObjectMapper.convertUserInputToModel(userInput);
-        UserView registeredUser = userService.registerUser(user);
+        UserViewDTO registeredUser = userService.registerUser(user);
         return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }
+
     @GetMapping("/{userId}/quizzes")
-    public ResponseEntity<List<QuizzesAndScoresView>> listQuizzesForUser(@PathVariable("userId") int userId) {
-        List<QuizzesAndScoresView> quizzes = quizService.listQuizzesForUser(userId);
+    public ResponseEntity<List<UserQuizDto>> listQuizzesForUser(@PathVariable("userId") int userId) {
+        List<UserQuizDto> quizzes = quizService.listQuizzesForUser(userId);
         return ResponseEntity.ok(quizzes);
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUser(@PathVariable int userId) {
-        UserView user = userService.getUser(userId);
+        UserViewDTO user = userService.getUser(userId);
 
         if(user != null) {
             MappingJacksonValue mapping = new MappingJacksonValue(user);
@@ -81,7 +75,7 @@ public class UserController {
         String jwt = token.substring(7);
         Map<String, Object> response = new HashMap<>();
 
-        UserView editedUser = userService.updateUserDetails(jwt,userId, updatedUser);
+        UserViewDTO editedUser = userService.updateUserDetails(jwt,userId, updatedUser);
         response.put("user", editedUser);
         response.put("message", "User details updated successfully. Re-authentication required.");
         return ResponseEntity.ok(response);

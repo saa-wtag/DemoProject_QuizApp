@@ -2,18 +2,13 @@ package QuizApp.controllers;
 
 import javax.validation.Valid;
 
-import QuizApp.exceptions.InvalidAnswerException;
-import QuizApp.exceptions.QuizNotFoundException;
-import QuizApp.exceptions.UserNotFoundException;
 import QuizApp.model.quiz.*;
-import QuizApp.repositories.QuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import QuizApp.services.quiz.QuizService;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/quizzes")
@@ -27,20 +22,20 @@ public class QuizController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<QuizView> createQuiz() {
-        QuizView quizView = quizService.createQuiz();
+    public ResponseEntity<QuizViewDTO> createQuiz() {
+        QuizViewDTO quizView = quizService.createQuiz();
         return new ResponseEntity<>(quizView, HttpStatus.CREATED);
     }
 
     @PatchMapping("/{quizId}")
-    public ResponseEntity<ResultView> submitAnswers(@PathVariable int quizId, @Valid @RequestBody AnswerInput answers) {
-        ResultView resultView = quizService.submitAnswers(quizId, answers.getAnswerIds());
+    public ResponseEntity<ResultViewDTO> submitAnswers(@PathVariable int quizId, @Valid @RequestBody AnswerInput answers) {
+        ResultViewDTO resultView = quizService.submitAnswers(quizId, answers.getAnswerIds());
         return ResponseEntity.ok(resultView);
     }
 
     @GetMapping("/{quizId}")
-    public ResponseEntity<QuizView> getQuiz(@PathVariable int quizId) {
-        QuizView quizView = quizService.getQuiz(quizId);
+    public ResponseEntity<QuizViewDTO> getQuiz(@PathVariable int quizId) {
+        QuizViewDTO quizView = quizService.getQuiz(quizId);
         return ResponseEntity.ok(quizView);
     }
 

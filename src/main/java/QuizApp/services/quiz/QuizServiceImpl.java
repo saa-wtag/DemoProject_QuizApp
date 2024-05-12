@@ -4,13 +4,13 @@ package QuizApp.services.quiz;
 import QuizApp.exceptions.AccessDeniedException;
 import QuizApp.exceptions.BadRequestException;
 import QuizApp.exceptions.ObjectNotFoundException;
+import QuizApp.exceptions.QuizNotFoundException;
 import QuizApp.model.question.Question;
 import QuizApp.model.question.QuestionDetails;
-import QuizApp.model.quiz.Quiz;
-import QuizApp.model.quiz.QuizView;
-import QuizApp.model.quiz.QuizzesAndScoresView;
-import QuizApp.model.quiz.ResultView;
+import QuizApp.model.question.QuestionWOAnswerDTO;
+import QuizApp.model.quiz.*;
 import QuizApp.model.user.User;
+import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.repositories.QuizRepository;
 import QuizApp.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,10 @@ import QuizApp.services.question.QuestionService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToQuizViewDTO;
+import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToResultViewDTO;
 
 
 @Service
@@ -45,9 +48,8 @@ public class QuizServiceImpl implements QuizService{
         return quiz != null && quiz.getUser().getUserId() == userId;
     }
 
-
     @Override
-    public QuizView createQuiz() {
+    public QuizViewDTO createQuiz() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
@@ -57,30 +59,41 @@ public class QuizServiceImpl implements QuizService{
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 
-        return quizRepository.findQuizViewByQuizId(quiz.getQuizId());
+        QuizViewDTO quizViewDTO = convertToQuizViewDTO(quiz);
+
+
+        return quizViewDTO;
     }
 
 
     @Override
-    public QuizView getQuiz(int quizId) {
-        QuizView quizView = quizRepository.findQuizViewByQuizId(quizId);
-        if(quizView==null)
-        {
+    public QuizViewDTO getQuiz(int quizId) {
+        Quiz quiz = quizRepository.findById(quizId).orElse(null);
+        if(quiz==null)
             throw new ObjectNotFoundException("Quiz not found with ID: " + quizId);
+
+        return convertToQuizViewDTO(quiz);
+    }
+
+    @Override
+    public  List<UserQuizDto>  listQuizzesForUser(int userId) {
+        List<Object[]> results = quizRepository.findUserAndQuizzes(userId);
+
+        if (results.isEmpty()) {
+            throw new ObjectNotFoundException("User not found or has no quizzes: " + userId);
         }
-        return quizView;
+
+        List<UserQuizDto> userQuizDtos = new ArrayList<>();
+        for (Object[] result : results) {
+            int quizId = (int) result[0];
+            long quizScore = (long) result[1];
+            userQuizDtos.add(new UserQuizDto(quizId, quizScore));
+        }
+        return userQuizDtos;
     }
 
     @Override
-    public  List< QuizzesAndScoresView>  listQuizzesForUser(int userId) {
-        if(userRepository.findByUserId(userId)==null)
-            throw new ObjectNotFoundException("User not found with ID: " + userId);
-
-        return quizRepository.findAllByUserId(userId);
-    }
-
-    @Override
-    public ResultView submitAnswers(int quizId, List<String> answerIds) {
+    public ResultViewDTO submitAnswers(int quizId, List<String> answerIds) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         int currentUserId = user.getUserId();
@@ -120,38 +133,7 @@ public class QuizServiceImpl implements QuizService{
         quiz.setScore(score);
         quizRepository.save(quiz);
 
-        long finalScore = score;
-        return new ResultView() {
-            @Override
-            public int getQuizId() {
-                return quizId;
-            }
-
-            @Override
-            public boolean getIfAttempted() {
-                return true;
-            }
-
-            @Override
-            public long getScore() {
-                return finalScore;
-            }
-
-            @Override
-            public List<QuestionDetails> getQuestions() {
-                return questionDetailsList;
-            }
-
-            @Override
-            public String getUserName() {
-                return ResultView.super.getUserName();
-            }
-
-            @Override
-            public User getUser() {
-                return user;
-            }
-        };
+        return convertToResultViewDTO(quiz, questionDetailsList);
     }
 
 
@@ -163,7 +145,7 @@ public class QuizServiceImpl implements QuizService{
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User currentUser = userRepository.findByUserName(userDetails.getUsername());
 
-        Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz not found"));
+        Quiz quiz = quizRepository.findById(quizId).orElseThrow(() -> new QuizNotFoundException("Quiz not found"));
         boolean isOwner = quiz.getUser().getUserId() == currentUser.getUserId();
 
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -172,7 +154,6 @@ public class QuizServiceImpl implements QuizService{
         if (!isAdmin && !isOwner) {
             throw new AccessDeniedException("Access denied: You are not authorized to delete this quiz.");
         }
-
         quizRepository.deleteById(quizId);
         System.out.println("Deleted quiz with ID: " + quizId);
     }

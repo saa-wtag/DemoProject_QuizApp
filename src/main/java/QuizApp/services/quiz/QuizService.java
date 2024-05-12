@@ -1,18 +1,15 @@
 package QuizApp.services.quiz;
 
-import QuizApp.model.quiz.Quiz;
-import QuizApp.model.quiz.QuizView;
-import QuizApp.model.quiz.QuizzesAndScoresView;
-import QuizApp.model.quiz.ResultView;
+import QuizApp.model.quiz.*;
 
 import java.util.List;
 
 public interface QuizService {
-    QuizView createQuiz();
-    QuizView getQuiz(int quizId);
-    List<QuizzesAndScoresView> listQuizzesForUser(int userId);
+    QuizViewDTO createQuiz();
+    QuizViewDTO getQuiz(int quizId);
+    List<UserQuizDto> listQuizzesForUser(int userId);
 
-    ResultView submitAnswers(int quizId, List<String> answerIds);
+    ResultViewDTO submitAnswers(int quizId, List<String> answerIds);
 
     void deleteQuiz(int quizId);
 }

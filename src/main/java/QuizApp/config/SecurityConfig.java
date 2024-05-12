@@ -74,7 +74,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(point))
                 .exceptionHandling()
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 Forbidden
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
                     String jsonPayload = "{\"error\": \"Access Denied: You do not have permission to access this resource.\"}";
                     response.getOutputStream().println(jsonPayload);
