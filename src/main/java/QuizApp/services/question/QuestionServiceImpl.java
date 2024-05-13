@@ -1,6 +1,7 @@
 package QuizApp.services.question;
 
 
+import QuizApp.exceptions.BadRequestException;
 import QuizApp.model.question.*;
 import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.repositories.QuestionRepository;
@@ -30,6 +31,7 @@ public class QuestionServiceImpl implements QuestionService{
         this.questionRepository = questionRepository;
     }
 
+    @Transactional
     @Override
     public QuestionViewDTO createQuestion(QuestionInput questionInput) {
         Question question = QuizObjectMapper.convertQuestionInputToModel(questionInput);
@@ -37,6 +39,7 @@ public class QuestionServiceImpl implements QuestionService{
         return convertToQuestionViewDTO(question);
     }
 
+    @Transactional
     @Override
     public QuestionViewDTO updateQuestionDetails(int questionId, QuestionUpdate questionUpdate) {
 
@@ -49,9 +52,7 @@ public class QuestionServiceImpl implements QuestionService{
             existingQuestion.setQuesTitle(question.getQuesTitle());
         }
         if (question.getOptions() != null && !question.getOptions().isEmpty()) {
-            if (!shouldUpdateOptions(question.getOptions())) {
-                throw new IllegalArgumentException("Four of the options must be uniquely labeled with 'A', 'B', 'C', or 'D'");
-            }
+
             existingQuestion.setOptions(question.getOptions());
         }
         if (question.getAnswer() != null && !question.getAnswer().isEmpty()) {
@@ -61,13 +62,6 @@ public class QuestionServiceImpl implements QuestionService{
         return convertToQuestionViewDTO(existingQuestion);
     }
 
-    private boolean shouldUpdateOptions(Map<String, String> updatedOptions) {
-        return updatedOptions.size() == 4 &&
-                updatedOptions.containsKey("A") &&
-                updatedOptions.containsKey("B") &&
-                updatedOptions.containsKey("C") &&
-                updatedOptions.containsKey("D");
-    }
 
     @Override
     public QuestionViewDTO getQuestionById(int questionId) {

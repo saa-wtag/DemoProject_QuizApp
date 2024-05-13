@@ -17,7 +17,7 @@ public class ValidAnswerValidator implements ConstraintValidator<EachValidAnswer
     @Override
     public boolean isValid(List<String> values, ConstraintValidatorContext context) {
         if (values == null) {
-            return true; // Null case is handled by @NotNull
+            return true;
         }
         return values.stream().allMatch(VALID_ANSWERS::contains);
     }

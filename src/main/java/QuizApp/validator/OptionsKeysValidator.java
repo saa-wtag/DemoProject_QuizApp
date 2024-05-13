@@ -16,13 +16,6 @@ public class OptionsKeysValidator implements ConstraintValidator<ValidOptions, M
     public boolean isValid(Map<String, String> options, ConstraintValidatorContext context) {
 
 
-        if (options == null) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate("Options cannot be null.")
-                    .addConstraintViolation();
-            return false;
-        }
-
         if (options.size() != VALID_KEYS.size()) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Options must exactly contain keys 'A', 'B', 'C', 'D'.")

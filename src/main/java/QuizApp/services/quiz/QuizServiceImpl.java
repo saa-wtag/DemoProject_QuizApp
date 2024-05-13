@@ -7,13 +7,10 @@ import QuizApp.exceptions.ObjectNotFoundException;
 import QuizApp.exceptions.QuizNotFoundException;
 import QuizApp.model.question.Question;
 import QuizApp.model.question.QuestionDetails;
-import QuizApp.model.question.QuestionWOAnswerDTO;
 import QuizApp.model.quiz.*;
 import QuizApp.model.user.User;
-import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.repositories.QuizRepository;
 import QuizApp.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,7 +21,6 @@ import QuizApp.services.question.QuestionService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToQuizViewDTO;
 import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToResultViewDTO;
@@ -59,10 +55,7 @@ public class QuizServiceImpl implements QuizService{
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 
-        QuizViewDTO quizViewDTO = convertToQuizViewDTO(quiz);
-
-
-        return quizViewDTO;
+        return convertToQuizViewDTO(quiz);
     }
 
 
@@ -92,6 +85,7 @@ public class QuizServiceImpl implements QuizService{
         return userQuizDtos;
     }
 
+    @Transactional
     @Override
     public ResultViewDTO submitAnswers(int quizId, List<String> answerIds) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -155,6 +149,5 @@ public class QuizServiceImpl implements QuizService{
             throw new AccessDeniedException("Access denied: You are not authorized to delete this quiz.");
         }
         quizRepository.deleteById(quizId);
-        System.out.println("Deleted quiz with ID: " + quizId);
     }
 }

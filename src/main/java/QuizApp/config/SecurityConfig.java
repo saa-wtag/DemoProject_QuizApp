@@ -35,7 +35,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
     private final JwtAuthenticationEntryPoint point;
     private final JwtAuthenticationFilter filter ;
 
-    @Autowired
+
     @Lazy
     public SecurityConfig(JwtAuthenticationEntryPoint point, JwtAuthenticationFilter filter) {
         this.point = point;
