@@ -3,7 +3,7 @@ package QuizApp.controllers;
 import javax.validation.Valid;
 
 import QuizApp.model.quiz.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import QuizApp.quizObjectMapper.QuizObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,27 +15,25 @@ import QuizApp.services.quiz.QuizService;
 public class QuizController {
     private final QuizService quizService;
 
-
-    @Autowired
     public QuizController(QuizService quizService) {
         this.quizService = quizService;
     }
 
     @PostMapping("/")
-    public ResponseEntity<QuizViewDTO> createQuiz() {
-        QuizViewDTO quizView = quizService.createQuiz();
+    public ResponseEntity<QuizDTO> createQuiz() {
+        QuizDTO quizView = QuizObjectMapper.convertToQuizViewDTO(quizService.createQuiz());
         return new ResponseEntity<>(quizView, HttpStatus.CREATED);
     }
 
     @PatchMapping("/{quizId}")
-    public ResponseEntity<ResultViewDTO> submitAnswers(@PathVariable int quizId, @Valid @RequestBody AnswerInput answers) {
-        ResultViewDTO resultView = quizService.submitAnswers(quizId, answers.getAnswerIds());
+    public ResponseEntity<ResultDTO> submitAnswers(@PathVariable int quizId, @Valid @RequestBody AnswerInput answers) {
+        ResultDTO resultView = (quizService.submitAnswers(quizId, answers.getAnswerIds()));
         return ResponseEntity.ok(resultView);
     }
 
     @GetMapping("/{quizId}")
-    public ResponseEntity<QuizViewDTO> getQuiz(@PathVariable int quizId) {
-        QuizViewDTO quizView = quizService.getQuiz(quizId);
+    public ResponseEntity<QuizDTO> getQuiz(@PathVariable int quizId) {
+        QuizDTO quizView = QuizObjectMapper.convertToQuizViewDTO(quizService.getQuiz(quizId));
         return ResponseEntity.ok(quizView);
     }
 

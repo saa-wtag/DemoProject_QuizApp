@@ -1,20 +1,13 @@
 package QuizApp.services.question;
 
 
-import QuizApp.exceptions.BadRequestException;
 import QuizApp.model.question.*;
 import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.repositories.QuestionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToQuestionViewDTO;
@@ -31,17 +24,19 @@ public class QuestionServiceImpl implements QuestionService{
         this.questionRepository = questionRepository;
     }
 
-    @Transactional
+
     @Override
-    public QuestionViewDTO createQuestion(QuestionInput questionInput) {
+    @Transactional
+    public Question createQuestion(QuestionInput questionInput) {
         Question question = QuizObjectMapper.convertQuestionInputToModel(questionInput);
         questionRepository.save(question);
-        return convertToQuestionViewDTO(question);
+        return question;
     }
 
-    @Transactional
+
     @Override
-    public QuestionViewDTO updateQuestionDetails(int questionId, QuestionUpdate questionUpdate) {
+    @Transactional
+    public Question updateQuestionDetails(int questionId, QuestionUpdate questionUpdate) {
 
         Question question = QuizObjectMapper.convertQuestionUpdateToModel(questionUpdate);
 
@@ -59,18 +54,28 @@ public class QuestionServiceImpl implements QuestionService{
             existingQuestion.setAnswer(question.getAnswer());
         }
         questionRepository.save(existingQuestion);
-        return convertToQuestionViewDTO(existingQuestion);
+        return existingQuestion;
     }
 
 
     @Override
-    public QuestionViewDTO getQuestionById(int questionId) {
+    @Transactional(readOnly = true)
+    public Question getQuestionById(int questionId) {
         Question questionView = questionRepository.findQuestionByQuesId(questionId);
         if (questionView == null) {
             throw new NoSuchElementException("Question not found with ID: " + questionId);
         }
-       return convertToQuestionViewDTO(questionView);
+       return questionView;
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Question> getRandomQuestionsForQuiz() {
+        return questionRepository.findRandomQuestions();
+    }
+
+
 
 //    @Override
 //    public void deleteQuestion(int questionId) {
@@ -81,8 +86,5 @@ public class QuestionServiceImpl implements QuestionService{
 //        questionRepository.delete(question);
 //    }
 
-    @Override
-    public List<Question> getRandomQuestionsForQuiz() {
-        return questionRepository.findRandomQuestions();
-    }
+
 }

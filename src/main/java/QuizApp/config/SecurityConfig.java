@@ -45,9 +45,10 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST,"/login").permitAll()
-                .antMatchers(HttpMethod.POST,"/logout").hasAnyRole("ADMIN", "USER")
+                .antMatchers(HttpMethod.POST,"/logout").permitAll()
 
                 .antMatchers(HttpMethod.POST, "/users/**").permitAll()
                 .antMatchers(HttpMethod.PUT, "/users/*").hasAnyRole("ADMIN", "USER")
@@ -86,8 +87,6 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
         http.csrf().disable();
         http.formLogin().disable();
         http.httpBasic().disable();
-
-        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -1,8 +1,6 @@
 package QuizApp.advice;
 
 import QuizApp.exceptions.*;
-import QuizApp.messages.ErrorMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -18,12 +16,6 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class ExceptionAdvice {
-    ErrorMessage errorMessage;
-
-    @Autowired
-    public ExceptionAdvice(ErrorMessage errorMessage) {
-        this.errorMessage = errorMessage;
-    }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<?> handleNoSuchElementException(NoSuchElementException ex) {

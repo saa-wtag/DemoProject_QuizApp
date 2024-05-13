@@ -15,17 +15,19 @@ import java.util.Map;
 public class LogoutController {
     private final JwtService jwtService;
 
-    @Autowired
+
     public LogoutController(JwtService jwtService) {
         this.jwtService = jwtService;
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String token) {
-        String jwt = token.substring(7);
+        int headerBearerStringSize = 7;
+        String jwt = token.substring(headerBearerStringSize);
         jwtService.blacklistToken(jwt);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Logout Successfully done!!");
+
         return ResponseEntity.ok(response);
     }
 }

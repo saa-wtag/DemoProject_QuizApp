@@ -2,15 +2,13 @@ package QuizApp.services.jwt;
 
 import QuizApp.exceptions.UnauthorizedException;
 import QuizApp.model.jwt.JWTRequest;
-import QuizApp.model.jwt.RefreshTokenResponse;
+import QuizApp.model.jwt.TokenResponse;
 import QuizApp.services.user.UserService;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class LoginService {
@@ -18,14 +16,14 @@ public class LoginService {
     private final UserService userService;
     private final JwtService jwtService;
 
-    @Autowired
+
     public LoginService(AuthenticationManager authenticationManager, UserService userService, JwtService jwtService) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
         this.jwtService = jwtService;
     }
 
-    public RefreshTokenResponse authenticate(JWTRequest request) {
+    public TokenResponse authenticate(JWTRequest request) {
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword());
 
         try {
@@ -39,7 +37,7 @@ public class LoginService {
         String accessToken = this.jwtService.generateAccessToken(userDetails);
         String refreshToken = this.jwtService.generateRefreshToken(userDetails);
 
-        return RefreshTokenResponse
+        return TokenResponse
                 .builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

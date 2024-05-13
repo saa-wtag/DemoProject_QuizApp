@@ -9,7 +9,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonPropertyOrder({"quizId","ifAttempted","userName","score","questions"})
-public class ResultViewDTO {
+public class ResultDTO {
     private int quizId;
     private boolean ifAttempted;
     private long score;

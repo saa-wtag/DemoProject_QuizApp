@@ -5,9 +5,9 @@ import QuizApp.model.question.*;
 import java.util.List;
 
 public interface QuestionService {
-    QuestionViewDTO createQuestion(QuestionInput questionInput);
-    QuestionViewDTO updateQuestionDetails(int questionId, QuestionUpdate questionUpdate);
-    QuestionViewDTO getQuestionById(int questionId);
+    Question createQuestion(QuestionInput questionInput);
+    Question updateQuestionDetails(int questionId, QuestionUpdate questionUpdate);
+    Question getQuestionById(int questionId);
 //    void deleteQuestion(int questionId);
     List<Question> getRandomQuestionsForQuiz();
 }

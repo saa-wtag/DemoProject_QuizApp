@@ -7,10 +7,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @JsonPropertyOrder({"quizId","score"})
-public class UserQuizDto {
+public class UserQuizDTO {
     private int quizId;
     private long quizScore;
 
-    public UserQuizDto(int quizId, long quizScore) {
+    public UserQuizDTO(int quizId, long quizScore) {
     }
 }

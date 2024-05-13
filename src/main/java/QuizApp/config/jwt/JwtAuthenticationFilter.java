@@ -1,13 +1,12 @@
 package QuizApp.config.jwt;
 
-
-import QuizApp.exceptions.UnauthorizedException;
 import QuizApp.services.jwt.JwtService;
 import QuizApp.util.TokenType;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,10 +24,11 @@ import java.util.Objects;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
     private final JwtService jwtHelper;
     private final UserDetailsService userDetailsService;
 
-    @Autowired
     public JwtAuthenticationFilter(JwtService jwtHelper, UserDetailsService userDetailsService) {
         this.jwtHelper = jwtHelper;
         this.userDetailsService = userDetailsService;
@@ -43,36 +43,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = null;
         TokenType secret = TokenType.ACCESS;
 
-        if(request.getRequestURI().equals("/refresh-token")){
+        if(request.getRequestURI().equals("/refresh-token")) {
             secret = TokenType.REFRESH;
         }
 
-        if (requestHeader != null && requestHeader.startsWith("Bearer")) {
+        if (requestHeader != null && requestHeader.startsWith("Bearer ")) {
             token = requestHeader.substring(7);
             try {
-                username = this.jwtHelper.getUsernameFromToken(token, secret);
-                logger.info(username + " is authenticated");
+                username = jwtHelper.getUsernameFromToken(token, secret);
+                logger.info("{} is authenticated", username);
             } catch (ExpiredJwtException e) {
-                logger.info("Given jwt token is expired !!");
+                logger.info("Given JWT token is expired: {}", e.getMessage());
             } catch (MalformedJwtException e) {
-                logger.info("Invalid Token");
+                logger.info("Invalid Token: {}", e.getMessage());
             } catch (Exception e) {
-                logger.info(e);
+                logger.error("An error occurred while parsing JWT token", e);
             }
         } else {
-            logger.info("Authentication not present!");
+            logger.info("Authentication header not present");
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            // checking token validation and checking if token is invalidated (logout) or not
-            if (Objects.nonNull(userDetails) && jwtHelper.validateToken(token, userDetails, secret) && jwtHelper.isTokenInBlacklist(token)) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            // Check if the token is invalidated
+            if (jwtHelper.isTokenInBlacklist(token)) {
+                logger.info("Token is invalidated, authentication failed");
+            } else if (jwtHelper.validateToken(token, userDetails, secret)) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.info("Authentication successful");
             } else {
-                logger.info("Validation fails !!");
+                logger.info("Token validation failed");
             }
         }
 

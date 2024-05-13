@@ -11,6 +11,7 @@ import QuizApp.model.quiz.*;
 import QuizApp.model.user.User;
 import QuizApp.repositories.QuizRepository;
 import QuizApp.repositories.UserRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,13 +40,10 @@ public class QuizServiceImpl implements QuizService{
         this.userRepository = userRepository;
     }
 
-    public boolean isUserQuizOwner(int quizId, int userId) {
-        Quiz quiz = quizRepository.findById(quizId).orElse(null);
-        return quiz != null && quiz.getUser().getUserId() == userId;
-    }
 
     @Override
-    public QuizViewDTO createQuiz() {
+    @Transactional
+    public Quiz createQuiz() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         List<Question> questions = questionService.getRandomQuestionsForQuiz();
@@ -55,78 +53,65 @@ public class QuizServiceImpl implements QuizService{
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
 
-        return convertToQuizViewDTO(quiz);
+        return quiz;
     }
 
 
     @Override
-    public QuizViewDTO getQuiz(int quizId) {
+    @Transactional(readOnly = true)
+    public Quiz getQuiz(int quizId) {
         Quiz quiz = quizRepository.findById(quizId).orElse(null);
         if(quiz==null)
             throw new ObjectNotFoundException("Quiz not found with ID: " + quizId);
 
-        return convertToQuizViewDTO(quiz);
+        return quiz;
     }
 
+
     @Override
-    public  List<UserQuizDto>  listQuizzesForUser(int userId) {
+    @Transactional(readOnly = true)
+    public  List<UserQuizDTO>  listQuizzesForUser(int userId) {
         List<Object[]> results = quizRepository.findUserAndQuizzes(userId);
 
         if (results.isEmpty()) {
             throw new ObjectNotFoundException("User not found or has no quizzes: " + userId);
         }
-
-        List<UserQuizDto> userQuizDtos = new ArrayList<>();
+        List<UserQuizDTO> userQuizDTOS = new ArrayList<>();
         for (Object[] result : results) {
             int quizId = (int) result[0];
             long quizScore = (long) result[1];
-            userQuizDtos.add(new UserQuizDto(quizId, quizScore));
+            userQuizDTOS.add(new UserQuizDTO(quizId, quizScore));
         }
-        return userQuizDtos;
+        return userQuizDTOS;
     }
 
-    @Transactional
     @Override
-    public ResultViewDTO submitAnswers(int quizId, List<String> answerIds) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = (User) authentication.getPrincipal();
-        int currentUserId = user.getUserId();
-
-        if (!isUserQuizOwner(quizId, currentUserId)) {
-            throw new AccessDeniedException("Access is denied: User does not own this quiz.");
-        }
-
+    @Transactional
+    @PreAuthorize("@quizSecurity.isUserQuizOwner(#quizId, principal.userId)")
+    public ResultDTO submitAnswers(int quizId, List<String> answerIds) {
         Quiz quiz = quizRepository.findQuizByQuizId(quizId);
         if (quiz.isIfAttempted()) {
             throw new BadRequestException("This quiz has already been attempted. You cannot submit answers again.");
         }
-        else
-            quiz.setIfAttempted(true);
 
         long score = 0;
-
+        quiz.setIfAttempted(true);
         List<QuestionDetails> questionDetailsList = new ArrayList<>();
-
         for (int i = 0; i < quiz.getQuestions().size(); i++) {
             Question question = quiz.getQuestions().get(i);
             String submittedAnswer = answerIds.get(i);
-
             if (question.getAnswer().equals(submittedAnswer)) {
                 score++;
             }
-
             QuestionDetails questionDetails = new QuestionDetails();
             questionDetails.setQuesTitle(question.getQuesTitle());
             questionDetails.setOptions(question.getOptions());
             questionDetails.setAnswer(question.getAnswer());
             questionDetails.setGivenAnswer(submittedAnswer);
-
             questionDetailsList.add(questionDetails);
         }
-
         quiz.setScore(score);
         quizRepository.save(quiz);
-
         return convertToResultViewDTO(quiz, questionDetailsList);
     }
 

@@ -4,7 +4,6 @@ package QuizApp.services.user;
 import QuizApp.exceptions.*;
 import QuizApp.model.user.User;
 import QuizApp.model.user.UserUpdate;
-import QuizApp.model.user.UserViewDTO;
 import QuizApp.repositories.UserRepository;
 import QuizApp.services.jwt.JwtService;
 
@@ -15,9 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.Objects;
-import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToUserViewDTO;
 
 
 @Service
@@ -35,7 +32,8 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserViewDTO registerUser(User user) {
+    @Transactional
+    public User registerUser(User user) {
 
         User existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getUserEmail());
 
@@ -50,12 +48,13 @@ public class UserServiceImpl implements UserService{
         user.setRole(User.UserRole.USER);
         userRepository.save(user);
 
-        return convertToUserViewDTO(user);
+        return user;
     }
 
     @Override
+    @Transactional
     @PreAuthorize("#userId == authentication.principal.userId")
-    public UserViewDTO updateUserDetails(String token,int userId, UserUpdate userToUpdate) {
+    public User updateUserDetails(String token, int userId, UserUpdate userToUpdate) {
         User existingUser = userRepository.findByUserId(userId);
 
         if (userToUpdate.getUserName() != null) {
@@ -82,19 +81,21 @@ public class UserServiceImpl implements UserService{
 
         userRepository.save(existingUser);
 
-        return convertToUserViewDTO(existingUser);
+        return existingUser;
     }
 
     @Override
-    public UserViewDTO getUser(int userId) {
+    @Transactional(readOnly = true)
+    public User getUser(int userId) {
 
         User user = userRepository.findByUserId(userId);
         if(Objects.isNull(user))
             throw new UserNotFoundException("There is no such user!");
-        return convertToUserViewDTO(user);
+        return user;
     }
 
     @Override
+    @Transactional
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
     public void deleteUser(int userId) {
         User user = userRepository.findByUserId(userId);
@@ -102,6 +103,7 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public User loadUserByUsername(String userName) throws UsernameNotFoundException {
         User user = userRepository.findByUserName(userName);
         if (user == null)

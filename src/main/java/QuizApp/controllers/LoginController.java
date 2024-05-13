@@ -1,10 +1,8 @@
 package QuizApp.controllers;
 
 import QuizApp.model.jwt.JWTRequest;
-import QuizApp.model.jwt.RefreshTokenResponse;
+import QuizApp.model.jwt.TokenResponse;
 import QuizApp.services.jwt.LoginService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,15 +14,15 @@ import javax.validation.Valid;
 public class LoginController {
     private final LoginService loginService;
 
-    @Autowired
+
     public LoginController(LoginService loginService) {
         this.loginService = loginService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<RefreshTokenResponse> login(@Valid @RequestBody JWTRequest request) {
+    public ResponseEntity<TokenResponse> login(@Valid @RequestBody JWTRequest request) {
 
-            RefreshTokenResponse response = loginService.authenticate(request);
+            TokenResponse response = loginService.authenticate(request);
             return ResponseEntity.ok(response);
     }
 }

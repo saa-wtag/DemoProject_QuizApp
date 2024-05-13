@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @JsonPropertyOrder({"userId", "userName", "userEmail", "role", "quizzes"})
-public class UserViewDTO {
+public class UserDTO {
     private int userId;
     private String userName;
     private String userEmail;

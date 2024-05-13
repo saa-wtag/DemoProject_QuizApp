@@ -9,7 +9,7 @@ import java.util.Map;
 @Getter
 @Setter
 @JsonPropertyOrder({"quesId","quesTitle", "options","answer"})
-public class QuestionViewDTO {
+public class QuestionDTO {
     private int quesId;
     private String quesTitle;
     private Map<String, String> options;

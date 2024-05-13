@@ -1,18 +1,34 @@
 package QuizApp.services.jwt;
 
+import QuizApp.model.jwt.AccessToken;
+import QuizApp.model.jwt.InvalidatedToken;
+import QuizApp.model.jwt.RefreshToken;
+import QuizApp.repositories.AccessTokenRepository;
+import QuizApp.repositories.InvalidatedTokenRepository;
+import QuizApp.repositories.RefreshTokenRepository;
 import QuizApp.util.TokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Function;
 
+
 @Service
 public class JwtService {
+
+    @Autowired
+    private AccessTokenRepository accessTokenRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+    @Autowired
+    private InvalidatedTokenRepository invalidatedTokenRepository;
 
     @Value("${jwt.validity.refresh.token}")
     public long JWT_REFRESH_TOKEN_VALIDITY;
@@ -22,11 +38,6 @@ public class JwtService {
     private String refreshTokenSecret;
     @Value("${jwt.secret.access.token}")
     private String accessTokenSecret;
-
-    private final Set<String> invalidatedTokens = new HashSet<>();
-    private String currentAccessToken ;
-    private String currentRefreshToken;
-    private final Map<String, String> tokenPairs = new HashMap<>();
 
     public String getUsernameFromToken(String token, TokenType tokenType) {
         return getClaimFromToken(token, Claims::getSubject, tokenType);
@@ -42,20 +53,13 @@ public class JwtService {
     }
 
     private Claims getAllClaimsFromToken(String token, TokenType tokenType) {
-        if(tokenType.equals(TokenType.ACCESS)){
-            return Jwts
-                    .parserBuilder()
-                    .setSigningKey(accessTokenSecret.toString())
-                    .build()
-                    .parseClaimsJws(token).getBody();
-        }
-        else {
-            return Jwts
-                    .parserBuilder()
-                    .setSigningKey(refreshTokenSecret.toString())
-                    .build()
-                    .parseClaimsJws(token).getBody();
-        }
+        String secretToken = tokenType.equals(TokenType.ACCESS) ? accessTokenSecret : refreshTokenSecret;
+
+        return Jwts.parserBuilder()
+                .setSigningKey(secretToken)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     private Boolean isTokenExpired(String token, TokenType tokenType) {
@@ -66,28 +70,14 @@ public class JwtService {
     public String generateAccessToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();
         String token = doGenerateToken(claims, userDetails.getUsername(), JWT_ACCESS_TOKEN_VALIDITY, accessTokenSecret);
-        if(currentAccessToken == null){
-            currentAccessToken = token;
-        }
-        else{
-            blacklistToken(currentAccessToken);
-            currentAccessToken = token;
-        }
+        saveAccessTokenToDatabase(token, userDetails.getUsername(), new Date(System.currentTimeMillis() + JWT_ACCESS_TOKEN_VALIDITY * 1000));
         return token;
     }
 
     public String generateRefreshToken(UserDetails userDetails){
         Map<String, Object> claims = new HashMap<>();
         String token = doGenerateToken(claims, userDetails.getUsername(), JWT_REFRESH_TOKEN_VALIDITY, refreshTokenSecret);
-        if(currentRefreshToken == null){
-            currentRefreshToken = token;
-            tokenPairs.put(currentAccessToken, token);
-        }
-        else{
-            blacklistToken(currentRefreshToken);
-            currentRefreshToken = token;
-            tokenPairs.put(currentAccessToken, token);
-        }
+        saveRefreshTokenToDatabase(token, userDetails.getUsername(), new Date(System.currentTimeMillis() + JWT_REFRESH_TOKEN_VALIDITY * 1000));
         return token;
     }
 
@@ -105,13 +95,28 @@ public class JwtService {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token, tokenType));
     }
 
+    @Transactional
     public void blacklistToken(String token) {
-        invalidatedTokens.add(token);
-        invalidatedTokens.add(tokenPairs.get(token));
+        Long accessTokenId = accessTokenRepository.findIdByToken(token);
+        String refreshToken = refreshTokenRepository.findTokenByAccessTokenId(accessTokenId);
+
+        invalidatedTokenRepository.save(new InvalidatedToken(token));
+        invalidatedTokenRepository.save(new InvalidatedToken(refreshToken));
     }
 
+    @Transactional(readOnly = true)
     public boolean isTokenInBlacklist(String token) {
-        return !invalidatedTokens.contains(token);
+        return invalidatedTokenRepository.existsByToken(token);
+    }
+
+    @Transactional
+    public void saveAccessTokenToDatabase(String token, String username, Date expiration) {
+        accessTokenRepository.save(new AccessToken(token, username, expiration));
+    }
+
+    @Transactional
+    public void saveRefreshTokenToDatabase(String token, String username, Date expiration) {
+        refreshTokenRepository.save(new RefreshToken(token, username, expiration));
     }
 
 }
