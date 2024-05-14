@@ -9,11 +9,21 @@ import java.util.Set;
 
 public class OptionsKeysValidator implements ConstraintValidator<ValidOptions, Map<String, String>> {
 
+    private boolean mandatory;
+
+    @Override
+    public void initialize(ValidOptions validOptions) {
+        this.mandatory = validOptions.mandatory();
+    }
+
 
     @Override
     public boolean isValid(Map<String, String> options, ConstraintValidatorContext context) {
         final Set<String> VALID_KEYS = Set.of("A", "B", "C", "D");
         final int MAX_LENGTH = 30;
+
+        if (!mandatory && options == null)
+            return true;
 
         if (options.size() != VALID_KEYS.size()) {
             context.disableDefaultConstraintViolation();

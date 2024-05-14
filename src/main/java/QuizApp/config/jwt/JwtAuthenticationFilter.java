@@ -65,7 +65,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            // Check if the token is invalidated
             if (jwtHelper.isTokenInBlacklist(token)) {
                 logger.info("Token is invalidated, authentication failed");
             } else if (jwtHelper.validateToken(token, userDetails, secret)) {

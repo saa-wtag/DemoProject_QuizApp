@@ -4,6 +4,7 @@ import javax.validation.Valid;
 
 import QuizApp.model.quiz.UserQuizDTO;
 import QuizApp.model.user.*;
+import QuizApp.services.jwt.JwtService;
 import QuizApp.services.quiz.QuizService;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -23,11 +24,12 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     private final QuizService quizService;
+    private final JwtService jwtService;
 
-
-    public UserController(UserService userService, QuizService quizService) {
+    public UserController(UserService userService, QuizService quizService, JwtService jwtService) {
         this.userService = userService;
         this.quizService = quizService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/")
@@ -69,13 +71,16 @@ public class UserController {
 
         UserDTO editedUser = QuizObjectMapper.convertToUserViewDTO(userService.updateUserDetails(jwt,userId, updatedUser));
         response.put("user", editedUser);
-        response.put("message", "User details updated successfully. Re-authentication required.");
+        response.put("message", "User details updated successfully. Re-authentication may required.");
         return ResponseEntity.ok(response);
 
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable int userId) {
+    public ResponseEntity<Void> deleteUser(@PathVariable int userId,@RequestHeader("Authorization") String token) {
+        int headerBearerStringSize = 7;
+        String jwt = token.substring(headerBearerStringSize);
+        jwtService.blacklistToken(jwt);
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }

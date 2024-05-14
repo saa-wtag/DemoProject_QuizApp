@@ -81,7 +81,7 @@ public class QuizServiceImpl implements QuizService{
 
     @Override
     @Transactional
-    @PreAuthorize("@quizSecurity.isUserQuizOwner(#quizId, principal.userId)")
+    @PreAuthorize("@quizSecurity.hasPermission(#quizId, principal.userId)")
     public ResultDTO submitAnswers(int quizId, List<String> answerIds) {
         Quiz quiz = getQuiz(quizId);
 

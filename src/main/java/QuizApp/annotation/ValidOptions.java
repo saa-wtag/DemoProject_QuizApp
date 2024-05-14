@@ -1,7 +1,6 @@
 package QuizApp.annotation;
 
 import QuizApp.validator.OptionsKeysValidator;
-
 import javax.validation.Constraint;
 import javax.validation.Payload;
 import java.lang.annotation.*;
@@ -17,6 +16,8 @@ public @interface ValidOptions {
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
+
+    boolean mandatory() default true;
 }
 
 
