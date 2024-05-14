@@ -1,6 +1,7 @@
 package QuizApp.services.question;
 
 
+import QuizApp.exceptions.QuizNotFoundException;
 import QuizApp.model.question.*;
 import QuizApp.quizObjectMapper.QuizObjectMapper;
 import QuizApp.repositories.QuestionRepository;
@@ -8,13 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
-import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToQuestionViewDTO;
 
 
 @Service
-@Transactional
 public class QuestionServiceImpl implements QuestionService{
 
     private final QuestionRepository questionRepository;
@@ -28,7 +26,7 @@ public class QuestionServiceImpl implements QuestionService{
     @Override
     @Transactional
     public Question createQuestion(QuestionInput questionInput) {
-        Question question = QuizObjectMapper.convertQuestionInputToModel(questionInput);
+        Question question = QuizObjectMapper.convertQuestionInputToEntity(questionInput);
         questionRepository.save(question);
         return question;
     }
@@ -38,20 +36,17 @@ public class QuestionServiceImpl implements QuestionService{
     @Transactional
     public Question updateQuestionDetails(int questionId, QuestionUpdate questionUpdate) {
 
-        Question question = QuizObjectMapper.convertQuestionUpdateToModel(questionUpdate);
+        Question existingQuestion = getQuestionById(questionId);
 
-        Question existingQuestion = questionRepository.findById(questionId)
-                .orElseThrow(() -> new NoSuchElementException("Question not found with ID: " + questionId));
-
-        if (question.getQuesTitle() != null && !question.getQuesTitle().trim().isEmpty()) {
-            existingQuestion.setQuesTitle(question.getQuesTitle());
+        if (questionUpdate.getQuesTitle() != null && !questionUpdate.getQuesTitle().trim().isEmpty()) {
+            existingQuestion.setQuesTitle(questionUpdate.getQuesTitle());
         }
-        if (question.getOptions() != null && !question.getOptions().isEmpty()) {
+        if (questionUpdate.getOptions() != null && !questionUpdate.getOptions().isEmpty()) {
 
-            existingQuestion.setOptions(question.getOptions());
+            existingQuestion.setOptions(questionUpdate.getOptions());
         }
-        if (question.getAnswer() != null && !question.getAnswer().isEmpty()) {
-            existingQuestion.setAnswer(question.getAnswer());
+        if (questionUpdate.getAnswer() != null && !questionUpdate.getAnswer().isEmpty()) {
+            existingQuestion.setAnswer(questionUpdate.getAnswer());
         }
         questionRepository.save(existingQuestion);
         return existingQuestion;
@@ -61,11 +56,8 @@ public class QuestionServiceImpl implements QuestionService{
     @Override
     @Transactional(readOnly = true)
     public Question getQuestionById(int questionId) {
-        Question questionView = questionRepository.findQuestionByQuesId(questionId);
-        if (questionView == null) {
-            throw new NoSuchElementException("Question not found with ID: " + questionId);
-        }
-       return questionView;
+      return questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuizNotFoundException("Question not found with ID: " + questionId));
     }
 
 

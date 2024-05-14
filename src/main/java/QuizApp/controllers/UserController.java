@@ -32,7 +32,7 @@ public class UserController {
 
     @PostMapping("/")
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody UserInput userInput) {
-        User user = QuizObjectMapper.convertUserInputToModel(userInput);
+        User user = QuizObjectMapper.convertUserInputToEntity(userInput);
         UserDTO registeredUser = QuizObjectMapper.convertToUserViewDTO(userService.registerUser(user));
         return new ResponseEntity<>(registeredUser, HttpStatus.CREATED);
     }

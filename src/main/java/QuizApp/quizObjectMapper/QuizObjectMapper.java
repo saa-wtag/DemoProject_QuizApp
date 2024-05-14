@@ -6,14 +6,13 @@ import QuizApp.model.quiz.QuizDTO;
 import QuizApp.model.quiz.ResultDTO;
 import QuizApp.model.user.User;
 import QuizApp.model.user.UserInput;
-import QuizApp.model.user.UserUpdate;
 import QuizApp.model.user.UserDTO;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class QuizObjectMapper {
-    public static User convertUserInputToModel(UserInput userInput){
+    public static User convertUserInputToEntity(UserInput userInput){
         User modelUser = new User();
         modelUser.setUserName(userInput.getUserName());
         modelUser.setUserEmail(userInput.getUserEmail());
@@ -21,18 +20,12 @@ public class QuizObjectMapper {
         return modelUser;
     }
 
-    public static Question convertQuestionInputToModel(QuestionInput questionInput){
+
+    public static Question convertQuestionInputToEntity(QuestionInput questionInput){
         Question modelQuestion = new Question();
         modelQuestion.setQuesTitle(questionInput.getQuesTitle());
         modelQuestion.setOptions(questionInput.getOptions());
         modelQuestion.setAnswer(questionInput.getAnswer());
-        return modelQuestion;
-    }
-    public static Question convertQuestionUpdateToModel(QuestionUpdate questionUpdate){
-        Question modelQuestion = new Question();
-        modelQuestion.setQuesTitle(questionUpdate.getQuesTitle());
-        modelQuestion.setOptions(questionUpdate.getOptions());
-        modelQuestion.setAnswer(questionUpdate.getAnswer());
         return modelQuestion;
     }
 

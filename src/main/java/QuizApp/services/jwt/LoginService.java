@@ -16,7 +16,6 @@ public class LoginService {
     private final UserService userService;
     private final JwtService jwtService;
 
-
     public LoginService(AuthenticationManager authenticationManager, UserService userService, JwtService jwtService) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;

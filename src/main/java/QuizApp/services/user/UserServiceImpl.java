@@ -14,11 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
-
 
 @Service
-@Transactional
 public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;
@@ -55,7 +52,7 @@ public class UserServiceImpl implements UserService{
     @Transactional
     @PreAuthorize("#userId == authentication.principal.userId")
     public User updateUserDetails(String token, int userId, UserUpdate userToUpdate) {
-        User existingUser = userRepository.findByUserId(userId);
+        User existingUser = getUser(userId);
 
         if (userToUpdate.getUserName() != null) {
             if (!userToUpdate.getUserName().equals(existingUser.getUsername()) &&
@@ -80,25 +77,21 @@ public class UserServiceImpl implements UserService{
         }
 
         userRepository.save(existingUser);
-
         return existingUser;
     }
 
     @Override
     @Transactional(readOnly = true)
     public User getUser(int userId) {
-
-        User user = userRepository.findByUserId(userId);
-        if(Objects.isNull(user))
-            throw new UserNotFoundException("There is no such user!");
-        return user;
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("There is no such user!"));
     }
 
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
     public void deleteUser(int userId) {
-        User user = userRepository.findByUserId(userId);
+        User user = getUser(userId);
         userRepository.delete(user);
     }
 
