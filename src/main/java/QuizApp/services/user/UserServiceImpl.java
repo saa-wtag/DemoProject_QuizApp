@@ -2,17 +2,24 @@ package QuizApp.services.user;
 
 
 import QuizApp.exceptions.*;
+import QuizApp.model.jwt.AccessToken;
 import QuizApp.model.user.User;
 import QuizApp.model.user.UserUpdate;
+import QuizApp.repositories.AccessTokenRepository;
 import QuizApp.repositories.UserRepository;
 import QuizApp.services.jwt.JwtService;
 
+import QuizApp.util.TokenType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 
 @Service
@@ -21,11 +28,13 @@ public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AccessTokenRepository accessTokenRepository;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AccessTokenRepository accessTokenRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.accessTokenRepository = accessTokenRepository;
     }
 
     @Override
@@ -90,8 +99,18 @@ public class UserServiceImpl implements UserService{
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.userId")
-    public void deleteUser(int userId) {
+    public void deleteUser(int userId, String token) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         User user = getUser(userId);
+
+        if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER")))
+                jwtService.blacklistToken(token);
+        else {
+            AccessToken accessToken = accessTokenRepository.findByUserName(user.getUsername());
+            if (accessToken != null) {
+                jwtService.blacklistToken(accessToken.getToken());
+            }
+        }
         userRepository.delete(user);
     }
 

@@ -48,7 +48,7 @@ public class SecurityConfig extends GlobalMethodSecurityConfiguration {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST,"/login").permitAll()
-                .antMatchers(HttpMethod.POST,"/logout").permitAll()
+                .antMatchers(HttpMethod.POST,"/logout").hasAnyRole("ADMIN", "USER")
 
                 .antMatchers(HttpMethod.POST, "/users/**").permitAll()
                 .antMatchers(HttpMethod.PUT, "/users/*").hasAnyRole("ADMIN", "USER")

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 import lombok.Setter;
 import QuizApp.model.user.User;
+import org.hibernate.engine.internal.Cascade;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class Quiz {
     private boolean ifAttempted;
     private long score;
 
-    @ManyToOne
+    @ManyToOne()
     @JsonIgnore
     User user;
 
@@ -36,4 +37,6 @@ public class Quiz {
             inverseJoinColumns = @JoinColumn(name = "question_id")
     )
     private List<Question> questions;
+
+    private boolean softDelete;
 }

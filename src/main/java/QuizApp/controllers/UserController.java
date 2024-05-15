@@ -6,6 +6,7 @@ import QuizApp.model.quiz.UserQuizDTO;
 import QuizApp.model.user.*;
 import QuizApp.services.jwt.JwtService;
 import QuizApp.services.quiz.QuizService;
+import QuizApp.util.TokenType;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import QuizApp.services.user.UserService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/users")
@@ -80,8 +82,7 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable int userId,@RequestHeader("Authorization") String token) {
         int headerBearerStringSize = 7;
         String jwt = token.substring(headerBearerStringSize);
-        jwtService.blacklistToken(jwt);
-        userService.deleteUser(userId);
+        userService.deleteUser(userId,jwt);
         return ResponseEntity.noContent().build();
     }
 }

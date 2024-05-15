@@ -9,6 +9,6 @@ public interface UserService extends UserDetailsService {
     User registerUser(User user);
     User updateUserDetails(String token, int userId, UserUpdate user);
     User getUser(int userId);
-    void deleteUser(int userId);
+    void deleteUser(int userId, String token);
     User loadUserByUsername(String userName);
 }

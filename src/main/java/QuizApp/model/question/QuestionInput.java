@@ -3,7 +3,6 @@ package QuizApp.model.question;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-
 import QuizApp.annotation.ValidOptions;
 import lombok.Getter;
 import lombok.Setter;

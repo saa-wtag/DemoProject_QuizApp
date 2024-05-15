@@ -11,4 +11,8 @@ public interface AccessTokenRepository extends JpaRepository<AccessToken, Long> 
 
     @Query("SELECT at.id FROM AccessToken at WHERE at.token = :token")
     Long findIdByToken(@Param("token") String token);
+
+    @Query("SELECT at FROM AccessToken at WHERE at.username = :username")
+    AccessToken findByUserName(@Param("username") String username);
+
 }

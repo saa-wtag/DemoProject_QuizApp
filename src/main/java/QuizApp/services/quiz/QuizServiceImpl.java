@@ -31,13 +31,11 @@ import static QuizApp.quizObjectMapper.QuizObjectMapper.convertToResultViewDTO;
 public class QuizServiceImpl implements QuizService{
     private final QuestionService questionService;
     private final QuizRepository quizRepository;
-    private final UserRepository userRepository;
 
 
-    public QuizServiceImpl(QuestionService questionService, QuizRepository quizRepository, UserRepository userRepository) {
+    public QuizServiceImpl(QuestionService questionService, QuizRepository quizRepository) {
         this.questionService = questionService;
         this.quizRepository = quizRepository;
-        this.userRepository = userRepository;
     }
 
 
@@ -51,6 +49,7 @@ public class QuizServiceImpl implements QuizService{
         Quiz quiz = new Quiz();
         quiz.setUser(user);
         quiz.setQuestions(questions);
+        quiz.setSoftDelete(false);
         quizRepository.save(quiz);
 
         return quiz;
@@ -59,8 +58,12 @@ public class QuizServiceImpl implements QuizService{
     @Override
     @Transactional(readOnly = true)
     public Quiz getQuiz(int quizId) {
-       return quizRepository.findById(quizId)
-               .orElseThrow(() -> new QuizNotFoundException("Quiz not found with ID: " + quizId));
+        Quiz quiz = quizRepository.findById(quizId) .orElseThrow(() -> new QuizNotFoundException("Quiz not found with ID: " + quizId));
+
+        if(quiz.isSoftDelete()) {
+            throw new QuizNotFoundException("Quiz not found with ID: " + quizId);
+        }
+       return quiz;
     }
 
     @Override
@@ -111,22 +114,12 @@ public class QuizServiceImpl implements QuizService{
         return convertToResultViewDTO(quiz, questionDetailsList);
     }
 
-
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or @quizSecurity.hasPermission(#quizId, principal.userId)")
     public void deleteQuiz(int quizId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        User currentUser = userRepository.findByUserName(userDetails.getUsername());
-
         Quiz quiz = getQuiz(quizId);
-        boolean isOwner = quiz.getUser().getUserId() == currentUser.getUserId();
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin && !isOwner) {
-            throw new AccessDeniedException("Access denied: You are not authorized to delete this quiz.");
-        }
-        quizRepository.deleteById(quizId);
+        quiz.setSoftDelete(true);
+        quizRepository.save(quiz);
     }
 }

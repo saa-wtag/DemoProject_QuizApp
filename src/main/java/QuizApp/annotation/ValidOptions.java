@@ -16,8 +16,6 @@ public @interface ValidOptions {
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
-
-    boolean mandatory() default true;
 }
 
 

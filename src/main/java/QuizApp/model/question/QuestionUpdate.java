@@ -1,10 +1,8 @@
 package QuizApp.model.question;
 
-import QuizApp.annotation.ValidOptions;
 import QuizApp.annotation.ValidOptionsUpdate;
 import lombok.Getter;
 import lombok.Setter;
-
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.Map;
