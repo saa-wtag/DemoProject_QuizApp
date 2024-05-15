@@ -1,13 +1,13 @@
 package QuizApp.validator;
 
-import QuizApp.annotation.ValidOptions;
-
+import QuizApp.annotation.ValidOptionsUpdate;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.Map;
 import java.util.Set;
 
-public class OptionsKeysValidator implements ConstraintValidator<ValidOptions, Map<String, String>> {
+public class OptionsKeysValidatorUpdate implements ConstraintValidator<ValidOptionsUpdate, Map<String, String>> {
+
 
 
     @Override
@@ -15,6 +15,7 @@ public class OptionsKeysValidator implements ConstraintValidator<ValidOptions, M
         final Set<String> VALID_KEYS = Set.of("A", "B", "C", "D");
         final int MAX_LENGTH = 30;
 
+        if(options==null) return true;
 
         if (options.size() != VALID_KEYS.size()) {
             context.disableDefaultConstraintViolation();
